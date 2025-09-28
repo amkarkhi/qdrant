@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::mem;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -6,6 +7,7 @@ use ahash::AHashSet;
 use common::counter::hardware_accumulator::HwMeasurementAcc;
 use futures::FutureExt;
 use futures::future::BoxFuture;
+use ordered_float::OrderedFloat;
 use parking_lot::Mutex;
 use segment::common::reciprocal_rank_fusion::rrf_scoring;
 use segment::common::score_fusion::{ScoreFusion, score_fusion};
@@ -260,8 +262,6 @@ impl LocalShard {
                 Ok(vec![rescored])
             } else {
                 debug_assert_eq!(depth, 0);
-                use ordered_float::OrderedFloat;
-                use std::collections::HashMap;
                 let mut points_by_id: HashMap<segment::types::ExtendedPointId, ScoredPoint> =
                     HashMap::new();
                 for points in &sources {
