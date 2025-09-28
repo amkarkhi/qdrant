@@ -262,7 +262,18 @@ impl LocalShard {
                 // The sources here are passed to the next layer without any extra processing.
                 // It is either a query without prefetches, or a fusion request and the intermediate results are passed to the next layer.
                 debug_assert_eq!(depth, 0);
-                Ok(sources)
+                // --- PATCH: Deduplicate and sort results before returning ---
+                use std::collections::HashMap;
+                use ordered_float::OrderedFloat;
+                let mut points_by_id: HashMap<segment::types::ExtendedPointId, ScoredPoint> = HashMap::new();
+                for points in &sources {
+                    for point in points {
+                        points_by_id.entry(point.id).or_insert_with(|| point.clone());
+                    }
+                }
+                let mut merged: Vec<_> = points_by_id.into_values().collect();
+                merged.sort_unstable_by(|a, b| OrderedFloat(b.score).cmp(&OrderedFloat(a.score)));
+                Ok(vec![merged])
             }
         }
         .boxed()
